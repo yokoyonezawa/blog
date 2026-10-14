@@ -16,6 +16,72 @@ model User {
   username     String   @unique // ログインID(ログイン時に使う)
   passwordHash String   // パスワードをそのまま保存せず、暗号化した文字列を保存する
   displayName  String   // 画面に表示する名前
-  bio          String?  // プロフィール文(あとで使う。今は空でもOK)
+  bio          String?  // プロフィール文
   createdAt    DateTime @default(now())
+  comments     Comment[] // このユーザーが書いたコメント
+  likes        Like[]    // このユーザーがしたいいね
+  footprintsReceived Footprint[] @relation("FootprintOwner")   // このユーザーが受け取ったあしあと
+  footprintsMade     Footprint[] @relation("FootprintVisitor") // このユーザーが残したあしあと
+  closeFriends       CloseFriend[] @relation("CloseFriendOwner")  // このユーザーが「親しい人」に入れた人
+  closeFriendOf      CloseFriend[] @relation("CloseFriendTarget") // このユーザーを「親しい人」に入れている人
+}
+
+// 記事へのコメントを表すテーブル
+// 記事はMarkdownファイルなので、記事そのものへの参照ではなく
+// 記事のslug(ファイル名)を文字列で保存しておく
+model Comment {
+  id        Int      @id @default(autoincrement())
+  postSlug  String   // どの記事へのコメントか
+  body      String   // コメント本文
+  createdAt DateTime @default(now())
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postSlug])
+}
+
+// 記事へのいいねを表すテーブル
+// ログインしている人は userId、ログインしていない人は anonId(ブラウザごとのランダムID)で記録する
+model Like {
+  id        Int      @id @default(autoincrement())
+  postSlug  String   // どの記事へのいいねか
+  createdAt DateTime @default(now())
+  userId    Int?     // ログイン済みの人のID(未ログインならnull)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anonId    String?  // 未ログインの人のブラウザID(ログイン済みならnull)
+
+  // 同じ人(同じブラウザ)が同じ記事に2回いいねできないようにする
+  @@unique([postSlug, userId])
+  @@unique([postSlug, anonId])
+  @@index([postSlug])
+}
+
+// あしあと(誰が、誰のページを見たか)を表すテーブル
+// 同じ人が同じ相手のページを何回見ても1行だけ持ち、最新の閲覧で上書きする
+model Footprint {
+  id          Int      @id @default(autoincrement())
+  ownerId     Int      // あしあとを受け取った人(ページの持ち主)
+  owner       User     @relation("FootprintOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  visitorId   Int      // 見に来た人
+  visitor     User     @relation("FootprintVisitor", fields: [visitorId], references: [id], onDelete: Cascade)
+  targetLabel String   // 何を見たか(例: プロフィール / 記事のタイトル)
+  targetPath  String   // そのページのURL(例: /posts/first-post)
+  visitedAt   DateTime @default(now())
+
+  @@unique([ownerId, visitorId])
+  @@index([ownerId, visitedAt])
+}
+
+// 「親しい人リスト」を表すテーブル(片方向)
+// ownerId の人が friendId の人を「親しい人」に入れている、という意味
+model CloseFriend {
+  id        Int      @id @default(autoincrement())
+  ownerId   Int
+  owner     User     @relation("CloseFriendOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  friendId  Int
+  friend    User     @relation("CloseFriendTarget", fields: [friendId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([ownerId, friendId])
+  @@index([friendId])
 }

@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { MAX_TAGS } from "@/lib/posts";
 import { getCurrentUser } from "@/lib/session";
+import { VISIBILITY_VALUES } from "@/lib/visibility";
 
 const postsDirectory = path.join(process.cwd(), "posts");
 
@@ -38,11 +39,17 @@ export async function createPost(formData) {
   const category = formData.get("category")?.toString().trim() || "";
   const tagsRaw = formData.get("tags")?.toString().trim() || "";
   const content = formData.get("content")?.toString() || "";
+  const visibility = formData.get("visibility")?.toString() || "public";
 
   // --- バリデーション(入力チェック) ---
 
   if (!title || !content) {
     throw new Error("タイトルと本文は必須です。");
+  }
+
+  // 公開範囲は決められた3種類のどれかだけ許可する
+  if (!VISIBILITY_VALUES.includes(visibility)) {
+    throw new Error("公開範囲の値が正しくありません。");
   }
 
   // カンマ区切りのタグ文字列を配列に変換(空白除去・空要素は除外)
@@ -80,6 +87,9 @@ export async function createPost(formData) {
 
   if (tags.length > 0) {
     frontmatterLines.push(`tags: [${tags.map((t) => `"${escape(t)}"`).join(", ")}]`);
+  }
+  if (visibility !== "public") {
+    frontmatterLines.push(`visibility: "${visibility}"`);
   }
   if (category) {
     frontmatterLines.push(`category: "${escape(category)}"`);

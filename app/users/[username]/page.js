@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/session";
 import { getPostsByAuthor } from "@/lib/posts";
 import PostCard from "@/components/PostCard";
+import { filterVisiblePosts } from "@/lib/visibility";
+import FootprintRecorder from "@/components/FootprintRecorder";
 
 export async function generateMetadata({ params }) {
   const { username } = await params;
@@ -22,10 +24,15 @@ export default async function ProfilePage({ params }) {
 
   const currentUser = await getCurrentUser();
   const isMe = currentUser?.username === profileUser.username;
-  const posts = getPostsByAuthor(profileUser.username);
+  const posts = await filterVisiblePosts(getPostsByAuthor(profileUser.username));
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      {/* ログイン中の他人が見たら、持ち主にあしあとを残す */}
+      {currentUser && !isMe && (
+        <FootprintRecorder kind="profile" keyValue={profileUser.username} />
+      )}
+
       <section className="rounded-lg border border-gray-200 bg-white p-6 mb-8">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -46,6 +53,14 @@ export default async function ProfilePage({ params }) {
           {profileUser.bio || "自己紹介はまだありません。"}
         </p>
 
+        {isMe && (
+          <p className="mt-4 text-sm">
+            <Link href="/settings/friends" className="text-gray-600 underline hover:text-gray-900">
+              親しい人リストを管理
+            </Link>
+          </p>
+        )}
+
         <p className="mt-4 text-xs text-gray-400">記事 {posts.length}件</p>
       </section>
 
@@ -54,7 +69,7 @@ export default async function ProfilePage({ params }) {
         {posts.length === 0 && (
           <p className="text-sm text-gray-500">まだ記事がありません。</p>
         )}
-        {posts.map(({ slug, title, date, excerpt, tags, category }) => (
+        {posts.map(({ slug, title, date, excerpt, tags, category, visibility }) => (
           <PostCard
             key={slug}
             slug={slug}
@@ -63,6 +78,7 @@ export default async function ProfilePage({ params }) {
             excerpt={excerpt}
             tags={tags}
             category={category}
+            visibility={visibility}
           />
         ))}
       </div>

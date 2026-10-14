@@ -24,6 +24,9 @@ export default async function Header() {
               >
                 投稿する
               </Link>
+              <Link href="/footprints" className="text-sm text-gray-600 hover:text-gray-900">
+                あしあと
+              </Link>
               <Link
                 href={`/users/${user.username}`}
                 className="text-sm text-gray-600 hover:text-gray-900"

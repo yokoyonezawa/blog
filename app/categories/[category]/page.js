@@ -2,6 +2,7 @@ import { getAllCategories, getPostsByCategory } from "@/lib/posts";
 import PostCard from "@/components/PostCard";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { filterVisiblePosts } from "@/lib/visibility";
 
 // tags/[tag]/page.js と同じ考え方:
 // 「どのカテゴリのページを事前に作っておくか」をNext.jsに教える
@@ -22,7 +23,7 @@ export async function generateMetadata({ params }) {
 export default async function CategoryPage({ params }) {
   const { category } = await params;
   const decodedCategory = decodeURIComponent(category);
-  const posts = getPostsByCategory(decodedCategory);
+  const posts = await filterVisiblePosts(getPostsByCategory(decodedCategory));
 
   // そのカテゴリの記事が1つも無ければ404にする
   if (posts.length === 0) {
@@ -40,7 +41,7 @@ export default async function CategoryPage({ params }) {
       </h1>
 
       <div className="flex flex-col gap-4">
-        {posts.map(({ slug, title, date, excerpt, tags, category }) => (
+        {posts.map(({ slug, title, date, excerpt, tags, category, visibility }) => (
           <PostCard
             key={slug}
             slug={slug}
@@ -49,6 +50,7 @@ export default async function CategoryPage({ params }) {
             excerpt={excerpt}
             tags={tags}
             category={category}
+            visibility={visibility}
           />
         ))}
       </div>

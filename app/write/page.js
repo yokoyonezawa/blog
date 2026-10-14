@@ -56,6 +56,14 @@ export default async function WritePage() {
           <input type="text" name="tags" className={inputClass} />
         </Field>
 
+        <Field label="公開範囲">
+          <select name="visibility" defaultValue="public" className={inputClass}>
+            <option value="public">🌐 全体公開（誰でも見れる）</option>
+            <option value="members">🔒 ログイン限定（ログインしている人だけ）</option>
+            <option value="friends">👥 親しい人のみ（親しい人リストの人だけ）</option>
+          </select>
+        </Field>
+
         <Field label="本文" hint="Markdown形式で書けます">
           <textarea
             name="content"

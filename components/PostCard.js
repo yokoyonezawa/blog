@@ -1,13 +1,19 @@
 import Link from "next/link";
 import TagBadge from "./TagBadge";
 import CategoryBadge from "./CategoryBadge";
+import { VISIBILITY_LABELS } from "@/lib/visibility";
 
-export default function PostCard({ slug, title, date, excerpt, tags, category }) {
+export default function PostCard({ slug, title, date, excerpt, tags, category, visibility }) {
   return (
     <div className="rounded-lg border border-gray-200 p-5 hover:shadow-md transition-shadow bg-white">
       <div className="flex items-center justify-between mb-1">
         <p className="text-xs text-gray-400">{date}</p>
-        {category && <CategoryBadge category={category} />}
+        <div className="flex items-center gap-2">
+          {visibility && visibility !== "public" && (
+            <span className="text-xs text-gray-500">{VISIBILITY_LABELS[visibility]}</span>
+          )}
+          {category && <CategoryBadge category={category} />}
+        </div>
       </div>
 
       <Link href={`/posts/${slug}`} className="block">
