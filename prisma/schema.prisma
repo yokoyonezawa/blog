@@ -1,0 +1,21 @@
+// Prisma: データベースの設計図をここに書く。
+// この内容をもとに「テーブル」が自動で作られる。
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ユーザー(自分・友達)を表すテーブル
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique // ログインID(ログイン時に使う)
+  passwordHash String   // パスワードをそのまま保存せず、暗号化した文字列を保存する
+  displayName  String   // 画面に表示する名前
+  bio          String?  // プロフィール文(あとで使う。今は空でもOK)
+  createdAt    DateTime @default(now())
+}
